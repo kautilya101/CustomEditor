@@ -14,7 +14,7 @@ const Demo = () => {
           <Button/>
         </div>
       </div>
-      <div className=''>
+      <div>
         <EditorWindow/>
       </div>
     </div>
