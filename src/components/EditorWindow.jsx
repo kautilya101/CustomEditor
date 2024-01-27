@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {Editor, getDefaultKeyBinding,Modifier,EditorState, RichUtils} from 'draft-js';
+import {Editor, getDefaultKeyBinding,Modifier,EditorState, RichUtils, convertToRaw, convertFromRaw} from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { colorStyleMap } from '../utils'
 
-const EditorWindow = () => {
+const EditorWindow = ({savehandler,localData}) => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [editorText,setEditorText] = useState('');
-  const [isHeader,setIsHeader] = useState(false)
   const styles = ['BOLD','UNDERLINE','red'];
 
   const editor = useRef(null);
   const focusEditor = () => {
     editor.current.focus();
   }
+
+
 
   const removeStyling = (state) => {
     const selection = state.getSelection();
@@ -90,19 +91,11 @@ const EditorWindow = () => {
       setEditorState(RichUtils.toggleInlineStyle(newState,'heading1'));
       return 'handled';
     }
-
-    if(command === 'remove-style'){
-
-    }
     
     return 'not-handled';
   }
 
   const keyBinding = (e) => {
-
-    if(e.code === 'Escape'){
-      return 'remove-style'
-    }
     
     if (e.code === 'Space' && editorText.trim() === '*') { //Cmd+1
       console.log('inside');
@@ -124,7 +117,28 @@ const EditorWindow = () => {
     return getDefaultKeyBinding(e);
   }
 
+  useEffect(() => {
+    if(localData === 'save'){
+      const editorData = editorState.getCurrentContent();
+      const toRawData = convertToRaw(editorData);
+      console.log('saving: ',toRawData);
+      savehandler(JSON.stringify(toRawData,null,2))
+      console.log('calling',localData);
+    }
+  },[localData])
 
+
+  useEffect(() => {
+    const editorData = localStorage.getItem('editor-text');
+    
+    if(editorData){
+      const toContentData = JSON.parse(editorData);
+      const contentState = convertFromRaw(toContentData);
+      console.log(contentState);
+      setEditorState(EditorState.createWithContent(contentState));
+    }
+  },[])
+  
   useEffect(() => {
     const currentContent = editorState.getCurrentContent();
     const selection = editorState.getSelection();
